@@ -1,0 +1,35 @@
+# Environment variables (contains sensitive API keys)
+.env
+
+# n8n data directory (contains credentials and execution data)
+n8n-data/
+.n8n/
+
+# Docker volumes
+volumes/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node modules (if you add custom nodes)
+node_modules/
+
+# Temporary files
+tmp/
+temp/
+
+# Backup files
+*.bak
+*.backup
