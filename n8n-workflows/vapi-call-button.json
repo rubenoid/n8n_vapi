@@ -1,0 +1,140 @@
+{
+  "name": "Vapi - Call Button (Outbound Call)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "vapi-call-button",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "webhook-trigger",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [
+        240,
+        300
+      ],
+      "webhookId": "vapi-call-button"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.vapi.ai/call/phone",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer {{ $env.VAPI_API_KEY }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": []
+        },
+        "options": {},
+        "bodyParametersJson": "={\n  \"assistantId\": \"{{ $env.VAPI_ASSISTANT_ID }}\",\n  \"customer\": {\n    \"number\": \"{{ $json.body.phoneNumber || $env.VAPI_PHONE_NUMBER }}\"\n  }\n}"
+      },
+      "id": "vapi-call-request",
+      "name": "Call Vapi API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.1,
+      "position": [
+        460,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"success\": true,\n  \"message\": \"Call initiated successfully!\",\n  \"callId\": \"{{ $json.id }}\",\n  \"phoneNumber\": \"{{ $json.customer.number }}\",\n  \"timestamp\": \"{{ $now }}\"\n}",
+        "options": {
+          "responseHeaders": {
+            "entries": [
+              {
+                "name": "Content-Type",
+                "value": "application/json"
+              }
+            ]
+          }
+        }
+      },
+      "id": "success-response",
+      "name": "Success Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseCode": 500,
+        "responseBody": "={\n  \"success\": false,\n  \"message\": \"Failed to initiate call\",\n  \"error\": \"{{ $json.error || $json.message }}\",\n  \"timestamp\": \"{{ $now }}\"\n}",
+        "options": {}
+      },
+      "id": "error-response",
+      "name": "Error Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        680,
+        400
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Call Vapi API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Vapi API": {
+      "main": [
+        [
+          {
+            "node": "Success Response",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "pinData": {},
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "tags": [
+    {
+      "createdAt": "2025-11-15T00:00:00.000Z",
+      "updatedAt": "2025-11-15T00:00:00.000Z",
+      "id": "vapi",
+      "name": "vapi"
+    }
+  ],
+  "triggerCount": 0,
+  "updatedAt": "2025-11-15T00:00:00.000Z",
+  "versionId": "1"
+}

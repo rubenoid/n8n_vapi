@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vapi Call Button</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .small-text {
+            font-size: 12px;
+            color: #999;
+            margin-top: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin-top: 10px;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 16px;
+            border-radius: 8px;
+            display: none;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .status.loading {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+            display: block;
+        }
+
+        .status strong {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 16px;
+        }
+
+        .status-detail {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .loader {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid #0c5460;
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📞 Vapi Call Button</h1>
+        <p class="subtitle">Make an outbound call via n8n + Vapi</p>
+
+        <div class="input-group">
+            <label for="webhookUrl">n8n Webhook URL</label>
+            <input
+                type="text"
+                id="webhookUrl"
+                placeholder="https://your-ngrok-url.ngrok.io/webhook/vapi-call-button"
+                value=""
+            >
+            <div class="small-text">Your n8n webhook URL (production or test)</div>
+        </div>
+
+        <div class="input-group">
+            <label for="phoneNumber">Phone Number (optional)</label>
+            <input
+                type="text"
+                id="phoneNumber"
+                placeholder="+1234567890"
+                value=""
+            >
+            <div class="small-text">Leave empty to use VAPI_PHONE_NUMBER from .env</div>
+        </div>
+
+        <button id="callButton" onclick="makeCall()">
+            🎯 Make Call Now
+        </button>
+
+        <div id="status" class="status"></div>
+    </div>
+
+    <script>
+        // Load saved webhook URL from localStorage
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedWebhookUrl = localStorage.getItem('webhookUrl');
+            if (savedWebhookUrl) {
+                document.getElementById('webhookUrl').value = savedWebhookUrl;
+            }
+        });
+
+        async function makeCall() {
+            const webhookUrl = document.getElementById('webhookUrl').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+            const statusDiv = document.getElementById('status');
+            const button = document.getElementById('callButton');
+
+            // Validate webhook URL
+            if (!webhookUrl) {
+                showStatus('error', 'Error', 'Please enter your n8n webhook URL');
+                return;
+            }
+
+            // Save webhook URL to localStorage
+            localStorage.setItem('webhookUrl', webhookUrl);
+
+            // Disable button and show loading
+            button.disabled = true;
+            showStatus('loading', 'Initiating call...', 'Please wait while we connect to n8n');
+
+            try {
+                const payload = {};
+                if (phoneNumber) {
+                    payload.phoneNumber = phoneNumber;
+                }
+
+                const response = await fetch(webhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showStatus(
+                        'success',
+                        '✅ Call Initiated!',
+                        `Call ID: ${data.callId}<br>Phone: ${data.phoneNumber}<br>The phone should ring shortly...`
+                    );
+                } else {
+                    showStatus(
+                        'error',
+                        '❌ Call Failed',
+                        data.message || data.error || 'Unknown error occurred'
+                    );
+                }
+            } catch (error) {
+                showStatus(
+                    'error',
+                    '❌ Connection Error',
+                    `Could not connect to n8n: ${error.message}<br><br>Make sure:<br>• n8n is running<br>• The webhook URL is correct<br>• The workflow is activated`
+                );
+            } finally {
+                button.disabled = false;
+            }
+        }
+
+        function showStatus(type, title, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = `status ${type}`;
+
+            let icon = '';
+            if (type === 'loading') {
+                icon = '<span class="loader"></span>';
+            }
+
+            statusDiv.innerHTML = `
+                <strong>${icon}${title}</strong>
+                <div class="status-detail">${message}</div>
+            `;
+        }
+    </script>
+</body>
+</html>
