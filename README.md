@@ -93,14 +93,35 @@ Before starting, make sure you have:
 
 ## 🚀 Installation Steps
 
-### Step 1: Clone the Repository
+### Quick Install (Recommended)
+
+For a simple automated installation, use the provided script:
+
+```bash
+git clone <your-repo-url>
+cd n8n_vapi
+./install.sh
+```
+
+The script will:
+- ✅ Check prerequisites (Docker, Docker Compose)
+- ✅ Set up your `.env` file
+- ✅ Prompt for Vapi credentials (optional)
+- ✅ Start n8n automatically
+- ✅ Provide next steps
+
+### Manual Installation
+
+If you prefer to install manually, follow these steps:
+
+#### Step 1: Clone the Repository
 
 ```bash
 git clone <your-repo-url>
 cd n8n_vapi
 ```
 
-### Step 2: Configure Environment Variables
+#### Step 2: Configure Environment Variables
 
 1. Copy the example environment file:
    ```bash
@@ -124,7 +145,7 @@ cd n8n_vapi
    - `VAPI_PHONE_NUMBER`: Vapi Dashboard → Phone Numbers
    - `VAPI_ASSISTANT_ID`: Vapi Dashboard → Assistants
 
-### Step 3: Start n8n
+#### Step 3: Start n8n
 
 ```bash
 docker-compose up -d
@@ -147,7 +168,7 @@ NAME       IMAGE              STATUS
 n8n_vapi   n8nio/n8n:latest   Up X seconds (healthy)
 ```
 
-### Step 4: Access n8n
+#### Step 4: Access n8n
 
 Open your browser and go to:
 ```
@@ -156,7 +177,7 @@ http://localhost:5678
 
 You'll see the n8n welcome screen. Create your account (this is local only, no data leaves your machine).
 
-### Step 5: Set Up Public URL for Webhooks (Required for Vapi)
+#### Step 5: Set Up Public URL for Webhooks (Required for Vapi)
 
 Vapi needs to send webhooks to your n8n, but `localhost` isn't accessible from the internet. Use a tunnel:
 
