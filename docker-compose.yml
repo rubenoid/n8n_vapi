@@ -1,0 +1,87 @@
+version: '3.8'
+
+services:
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n_vapi
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      # Basic n8n configuration
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=${N8N_PROTOCOL:-http}
+
+      # Webhook URL for external services like Vapi
+      - WEBHOOK_URL=${WEBHOOK_URL:-http://localhost:5678}
+
+      # Timezone
+      - GENERIC_TIMEZONE=${TIMEZONE:-America/New_York}
+
+      # Execution mode
+      - EXECUTIONS_MODE=regular
+
+      # Data folder
+      - N8N_USER_FOLDER=/home/node/.n8n
+
+      # Security
+      - N8N_BASIC_AUTH_ACTIVE=${N8N_BASIC_AUTH_ACTIVE:-false}
+      - N8N_BASIC_AUTH_USER=${N8N_BASIC_AUTH_USER}
+      - N8N_BASIC_AUTH_PASSWORD=${N8N_BASIC_AUTH_PASSWORD}
+
+      # Vapi Configuration (custom environment variables for workflows)
+      - VAPI_API_KEY=${VAPI_API_KEY}
+      - VAPI_PHONE_NUMBER=${VAPI_PHONE_NUMBER}
+      - VAPI_ASSISTANT_ID=${VAPI_ASSISTANT_ID}
+
+      # Additional n8n settings
+      - N8N_LOG_LEVEL=${N8N_LOG_LEVEL:-info}
+      - N8N_METRICS=false
+
+    volumes:
+      # Persist n8n data (workflows, credentials, settings)
+      - n8n_data:/home/node/.n8n
+
+      # Optional: mount local workflows for backup/version control
+      - ./n8n-workflows:/home/node/.n8n/workflows
+
+    networks:
+      - n8n-network
+
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:5678/healthz"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Optional: PostgreSQL database for production-like setup
+  # Uncomment if you want to use PostgreSQL instead of SQLite
+  # postgres:
+  #   image: postgres:15-alpine
+  #   container_name: n8n_postgres
+  #   restart: unless-stopped
+  #   environment:
+  #     - POSTGRES_USER=${POSTGRES_USER:-n8n}
+  #     - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-n8n_password}
+  #     - POSTGRES_DB=${POSTGRES_DB:-n8n}
+  #   volumes:
+  #     - postgres_data:/var/lib/postgresql/data
+  #   networks:
+  #     - n8n-network
+  #   healthcheck:
+  #     test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-n8n}"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+volumes:
+  n8n_data:
+    driver: local
+  # postgres_data:
+  #   driver: local
+
+networks:
+  n8n-network:
+    driver: bridge
